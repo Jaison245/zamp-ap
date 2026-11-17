@@ -1,0 +1,25 @@
+# Python
+.venv/
+__pycache__/
+*.pyc
+
+# Node / build output (rebuilt in Docker)
+frontend/node_modules/
+frontend/dist/
+
+# Runtime state (recreated on boot; reset reloads fixtures)
+uploads/
+app.db
+*.db
+
+# Secrets
+.env
+.env.*
+
+# Editor / OS
+.claude/
+.DS_Store
+Thumbs.db
+
+# Large case brief (not part of the deliverable repo)
+ASA Case Study — Candidate Guide.pdf

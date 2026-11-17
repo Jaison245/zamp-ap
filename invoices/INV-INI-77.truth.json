@@ -1,0 +1,115 @@
+{
+  "id": "INV-INI-77",
+  "kind": "scanned",
+  "tag": "scanned / implied_PO",
+  "expected_decision": "APPROVE",
+  "expected_codes": [
+    "PO_INFERRED"
+  ],
+  "extraction": {
+    "document_type": "invoice",
+    "contains_multiple_invoices": false,
+    "vendor": {
+      "name": "Initech GmbH",
+      "address": "Hauptstrasse 5, 60311 Frankfurt, Germany",
+      "tax_id": "DE811234567",
+      "email": "rechnung@initech.example",
+      "bank": {
+        "account_name": "Initech GmbH",
+        "iban_or_account": "DE89370400440532013000",
+        "swift_or_routing": "COBADEFF"
+      }
+    },
+    "bill_to": {
+      "name": "Zamp Inc",
+      "address": "1 Market St, San Francisco, CA 94105, USA"
+    },
+    "invoice_number": "INV-INI-77",
+    "invoice_date": {
+      "raw": "28 Aug 2026",
+      "iso": "2026-08-28",
+      "ambiguous": false
+    },
+    "due_date": {
+      "raw": "27 Sep 2026",
+      "iso": "2026-09-27",
+      "ambiguous": false
+    },
+    "payment_terms": "Net 30",
+    "po_reference": null,
+    "currency": "EUR",
+    "line_items": [
+      {
+        "description": "Software license annual",
+        "sku": "SKU-INI-LIC",
+        "quantity": "10",
+        "unit_price": {
+          "raw": "800.00",
+          "value": "800.00"
+        },
+        "amount": {
+          "raw": "8,000.00",
+          "value": "8000.00"
+        },
+        "tax_rate": "0.19"
+      }
+    ],
+    "subtotal": {
+      "raw": "8,000.00",
+      "value": "8000.00"
+    },
+    "discount": null,
+    "shipping": null,
+    "tax_lines": [
+      {
+        "label": "USt (VAT)",
+        "rate": "0.19",
+        "amount": {
+          "raw": "1,520.00",
+          "value": "1520.00"
+        }
+      }
+    ],
+    "tax_inclusive": false,
+    "total": {
+      "raw": "9,520.00",
+      "value": "9520.00"
+    },
+    "amount_due": {
+      "raw": "9,520.00",
+      "value": "9520.00"
+    },
+    "evidence": {
+      "invoice_number": {
+        "quote": "Invoice No: INV-INI-77",
+        "page": 1
+      },
+      "invoice_date": {
+        "quote": "Date: 28 Aug 2026",
+        "page": 1
+      },
+      "total": {
+        "quote": "Total Due: EUR 9,520.00",
+        "page": 1
+      },
+      "vendor": {
+        "quote": "Initech GmbH",
+        "page": 1
+      },
+      "tax_id": {
+        "quote": "Tax ID: DE811234567",
+        "page": 1
+      },
+      "bank_account": {
+        "quote": "Account: DE89370400440532013000",
+        "page": 1
+      }
+    },
+    "missing_fields": [],
+    "legibility": "partial",
+    "extraction_warnings": [
+      "low DPI scan; some regions faint"
+    ],
+    "suspicious_instructions": []
+  }
+}

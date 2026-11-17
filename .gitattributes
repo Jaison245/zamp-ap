@@ -1,0 +1,21 @@
+# Keep binaries byte-exact across platforms (critical for sample PDFs)
+*.pdf   binary
+*.png   binary
+*.jpg   binary
+*.jpeg  binary
+*.ico   binary
+*.db    binary
+
+# Normalize text to LF in the repo
+*.py    text eol=lf
+*.ts    text eol=lf
+*.tsx   text eol=lf
+*.js    text eol=lf
+*.json  text eol=lf
+*.css   text eol=lf
+*.html  text eol=lf
+*.md    text eol=lf
+*.yaml  text eol=lf
+*.yml   text eol=lf
+*.csv   text eol=lf
+Dockerfile text eol=lf

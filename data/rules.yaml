@@ -1,0 +1,44 @@
+tolerances:
+  line_price_pct: 0.02
+  invoice_total_pct: 0.02
+  invoice_total_abs: 100
+  cumulative_po_pct: 0.02
+allowed_tax_rates:
+  US:
+  - 0
+  GB:
+  - 0
+  - 0.2
+  DE:
+  - 0
+  - 0.07
+  - 0.19
+  FR:
+  - 0
+  - 0.055
+  - 0.1
+  - 0.2
+  IN:
+  - 0
+  - 0.05
+  - 0.12
+  - 0.18
+  - 0.28
+invoice_age:
+  max_age_days: 180
+  future_tolerance_days: 2
+duplicate:
+  possible_amount_pct: 0.01
+  possible_window_days: 30
+required_fields:
+- invoice_number
+- invoice_date
+- vendor
+- total
+our_company:
+  names:
+  - Zamp Inc
+  - Zamp
+  - Zamp Technologies
+  - Zamp Finance
+reference_date: '2026-11-17'

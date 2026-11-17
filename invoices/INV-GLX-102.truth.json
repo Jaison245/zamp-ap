@@ -1,0 +1,106 @@
+{
+  "id": "INV-GLX-102",
+  "kind": "text",
+  "tag": "split_billing",
+  "expected_decision": "APPROVE",
+  "expected_codes": [],
+  "extraction": {
+    "document_type": "invoice",
+    "contains_multiple_invoices": false,
+    "vendor": {
+      "name": "Globex Manufacturing Inc",
+      "address": "88 Industrial Pkwy, Springfield, IL 62704, USA",
+      "tax_id": "US-45-1234567",
+      "email": "billing@globex.example",
+      "bank": {
+        "account_name": "Globex Manufacturing Inc",
+        "iban_or_account": "021000021-123456789",
+        "swift_or_routing": "CHASUS33"
+      }
+    },
+    "bill_to": {
+      "name": "Zamp Inc",
+      "address": "1 Market St, San Francisco, CA 94105, USA"
+    },
+    "invoice_number": "INV-GLX-102",
+    "invoice_date": {
+      "raw": "12 Oct 2026",
+      "iso": "2026-10-12",
+      "ambiguous": false
+    },
+    "due_date": {
+      "raw": "12 Nov 2026",
+      "iso": "2026-11-12",
+      "ambiguous": false
+    },
+    "payment_terms": "Net 45",
+    "po_reference": "PO-1002",
+    "currency": "USD",
+    "line_items": [
+      {
+        "description": "Aluminium panel 2m",
+        "sku": "SKU-GLX-PANEL",
+        "quantity": "120",
+        "unit_price": {
+          "raw": "100.00",
+          "value": "100.00"
+        },
+        "amount": {
+          "raw": "12,000.00",
+          "value": "12000.00"
+        },
+        "tax_rate": "0.00"
+      }
+    ],
+    "subtotal": {
+      "raw": "12,000.00",
+      "value": "12000.00"
+    },
+    "discount": null,
+    "shipping": null,
+    "tax_lines": [],
+    "tax_inclusive": false,
+    "total": {
+      "raw": "12,000.00",
+      "value": "12000.00"
+    },
+    "amount_due": {
+      "raw": "12,000.00",
+      "value": "12000.00"
+    },
+    "evidence": {
+      "invoice_number": {
+        "quote": "Invoice No: INV-GLX-102",
+        "page": 1
+      },
+      "invoice_date": {
+        "quote": "Date: 12 Oct 2026",
+        "page": 1
+      },
+      "total": {
+        "quote": "Total Due: USD 12,000.00",
+        "page": 1
+      },
+      "vendor": {
+        "quote": "Globex Manufacturing Inc",
+        "page": 1
+      },
+      "tax_id": {
+        "quote": "Tax ID: US-45-1234567",
+        "page": 1
+      },
+      "bank_account": {
+        "quote": "Account: 021000021-123456789",
+        "page": 1
+      },
+      "po_reference": {
+        "quote": "PO Reference: PO-1002",
+        "page": 1
+      }
+    },
+    "missing_fields": [],
+    "legibility": "good",
+    "extraction_warnings": [],
+    "suspicious_instructions": []
+  }
+}

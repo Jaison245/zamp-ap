@@ -1,0 +1,131 @@
+{
+  "id": "INV-ACME-001-RESEND",
+  "kind": "text",
+  "tag": "duplicate",
+  "expected_decision": "REJECT",
+  "expected_codes": [
+    "DUPLICATE_INVOICE"
+  ],
+  "extraction": {
+    "document_type": "invoice",
+    "contains_multiple_invoices": false,
+    "vendor": {
+      "name": "ACME Supplies",
+      "address": "14 Foundry Rd, Sheffield S1 2AB, UK",
+      "tax_id": "GB123456789",
+      "email": "ap@acme.example",
+      "bank": {
+        "account_name": "Acme Supplies Ltd",
+        "iban_or_account": "GB29NWBK60161331926819",
+        "swift_or_routing": "NWBKGB2L"
+      }
+    },
+    "bill_to": {
+      "name": "Zamp Inc",
+      "address": "1 Market St, San Francisco, CA 94105, USA"
+    },
+    "invoice_number": "INV-ACME-001",
+    "invoice_date": {
+      "raw": "06 Oct 2026",
+      "iso": "2026-10-06",
+      "ambiguous": false
+    },
+    "due_date": {
+      "raw": "05 Nov 2026",
+      "iso": "2026-11-05",
+      "ambiguous": false
+    },
+    "payment_terms": "Net 30",
+    "po_reference": "PO-1001",
+    "currency": "GBP",
+    "line_items": [
+      {
+        "description": "Steel brackets galvanised",
+        "sku": "SKU-ACM-STEEL",
+        "quantity": "200",
+        "unit_price": {
+          "raw": "40.60",
+          "value": "40.60"
+        },
+        "amount": {
+          "raw": "8,120.00",
+          "value": "8120.00"
+        },
+        "tax_rate": "0.20"
+      },
+      {
+        "description": "M8 bolts box of 100",
+        "sku": "SKU-ACM-BOLT",
+        "quantity": "80",
+        "unit_price": {
+          "raw": "50.00",
+          "value": "50.00"
+        },
+        "amount": {
+          "raw": "4,000.00",
+          "value": "4000.00"
+        },
+        "tax_rate": "0.20"
+      }
+    ],
+    "subtotal": {
+      "raw": "12,120.00",
+      "value": "12120.00"
+    },
+    "discount": null,
+    "shipping": null,
+    "tax_lines": [
+      {
+        "label": "VAT",
+        "rate": "0.20",
+        "amount": {
+          "raw": "2,424.00",
+          "value": "2424.00"
+        }
+      }
+    ],
+    "tax_inclusive": false,
+    "total": {
+      "raw": "14,544.00",
+      "value": "14544.00"
+    },
+    "amount_due": {
+      "raw": "14,544.00",
+      "value": "14544.00"
+    },
+    "evidence": {
+      "invoice_number": {
+        "quote": "Invoice No: INV-ACME-001",
+        "page": 1
+      },
+      "invoice_date": {
+        "quote": "Date: 06 Oct 2026",
+        "page": 1
+      },
+      "total": {
+        "quote": "Total Due: GBP 14,544.00",
+        "page": 1
+      },
+      "vendor": {
+        "quote": "ACME Supplies",
+        "page": 1
+      },
+      "tax_id": {
+        "quote": "Tax ID: GB123456789",
+        "page": 1
+      },
+      "bank_account": {
+        "quote": "Account: GB29NWBK60161331926819",
+        "page": 1
+      },
+      "po_reference": {
+        "quote": "PO Reference: PO-1001",
+        "page": 1
+      }
+    },
+    "missing_fields": [],
+    "legibility": "good",
+    "extraction_warnings": [],
+    "suspicious_instructions": []
+  }
+}

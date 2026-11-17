@@ -1,0 +1,18 @@
+# Render Blueprint — one service that builds the UI and serves API + UI.
+# Render auto-detects this file: New + → "Blueprint" → pick this repo → Apply.
+services:
+  - type: web
+    name: zamp-ap
+    runtime: docker
+    plan: free
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /api/health
+    autoDeploy: true
+    envVars:
+      # Mock mode by default (no key needed) = free, deterministic demo.
+      - key: EXTRACTOR
+        value: auto
+      # Optional: add your key in the Render dashboard to switch to real Claude
+      # extraction. Left unset here so it never lands in git.
+      - key: ANTHROPIC_API_KEY
+        sync: false

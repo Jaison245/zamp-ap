@@ -1,0 +1,104 @@
+{
+  "id": "INV-SOY-5",
+  "kind": "text",
+  "tag": "blocked_vendor",
+  "expected_decision": "REJECT",
+  "expected_codes": [
+    "VENDOR_BLOCKED"
+  ],
+  "extraction": {
+    "document_type": "invoice",
+    "contains_multiple_invoices": false,
+    "vendor": {
+      "name": "Soylent Foods LLC",
+      "address": "500 Green St, Austin, TX 78701, USA",
+      "tax_id": "US-99-7654321",
+      "email": "ap@soylent.example",
+      "bank": {
+        "account_name": "Soylent Foods LLC",
+        "iban_or_account": "123456789012",
+        "swift_or_routing": "WFBIUS6S"
+      }
+    },
+    "bill_to": {
+      "name": "Zamp Inc",
+      "address": "1 Market St, San Francisco, CA 94105, USA"
+    },
+    "invoice_number": "INV-SOY-5",
+    "invoice_date": {
+      "raw": "01 Nov 2026",
+      "iso": "2026-11-01",
+      "ambiguous": false
+    },
+    "due_date": {
+      "raw": "01 Dec 2026",
+      "iso": "2026-12-01",
+      "ambiguous": false
+    },
+    "payment_terms": "Net 30",
+    "po_reference": null,
+    "currency": "USD",
+    "line_items": [
+      {
+        "description": "Nutrition powder, 50kg drum",
+        "sku": "SKU-SOY-POW",
+        "quantity": "10",
+        "unit_price": {
+          "raw": "300.00",
+          "value": "300.00"
+        },
+        "amount": {
+          "raw": "3,000.00",
+          "value": "3000.00"
+        },
+        "tax_rate": "0.00"
+      }
+    ],
+    "subtotal": {
+      "raw": "3,000.00",
+      "value": "3000.00"
+    },
+    "discount": null,
+    "shipping": null,
+    "tax_lines": [],
+    "tax_inclusive": false,
+    "total": {
+      "raw": "3,000.00",
+      "value": "3000.00"
+    },
+    "amount_due": {
+      "raw": "3,000.00",
+      "value": "3000.00"
+    },
+    "evidence": {
+      "invoice_number": {
+        "quote": "Invoice No: INV-SOY-5",
+        "page": 1
+      },
+      "invoice_date": {
+        "quote": "Date: 01 Nov 2026",
+        "page": 1
+      },
+      "total": {
+        "quote": "Total Due: USD 3,000.00",
+        "page": 1
+      },
+      "vendor": {
+        "quote": "Soylent Foods LLC",
+        "page": 1
+      },
+      "tax_id": {
+        "quote": "Tax ID: US-99-7654321",
+        "page": 1
+      },
+      "bank_account": {
+        "quote": "Account: 123456789012",
+        "page": 1
+      }
+    },
+    "missing_fields": [],
+    "legibility": "good",
+    "extraction_warnings": [],
+    "suspicious_instructions": []
+  }
+}

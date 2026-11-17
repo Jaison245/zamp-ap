@@ -1,0 +1,9 @@
+po_number,line_no,sku,description,qty,unit_price,tax_rate
+PO-1001,1,SKU-ACM-STEEL,Steel brackets galvanised,200,40.00,0.20
+PO-1001,2,SKU-ACM-BOLT,M8 bolts box of 100,80,50.00,0.20
+PO-1002,1,SKU-GLX-PANEL,Aluminium panel 2m,300,100.00,0.00
+PO-1003,1,SKU-INI-LIC,Software license annual,10,800.00,0.19
+PO-1004,1,SKU-UMB-API,Active pharma ingredient kg,100,5000.00,0.18
+PO-1005,1,SKU-STK-REACTOR,Arc reactor module,3,5000.00,0.20
+PO-1006,1,SKU-WNK-FREIGHT,Freight services EU,1,5000.00,0.20
+PO-1007,1,SKU-GLX-BRACKET,Steel bracket assembly,90,100.00,0.00

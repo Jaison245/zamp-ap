@@ -1,0 +1,9 @@
+vendor_id,legal_name,aliases,tax_id,country,currency,bank_account_name,iban_or_account,payment_terms,status,contact_email
+V001,Acme Supplies Ltd,ACME Supplies|Acme Supply Co.,GB123456789,GB,GBP,Acme Supplies Ltd,GB29NWBK60161331926819,Net 30,active,ap@acme.example
+V002,Globex Manufacturing Inc,Globex Inc|Globex Mfg,US-45-1234567,US,USD,Globex Manufacturing Inc,021000021-123456789,Net 45,active,billing@globex.example
+V003,Initech GmbH,Initech,DE811234567,DE,EUR,Initech GmbH,DE89370400440532013000,Net 30,active,rechnung@initech.example
+V004,Umbrella Pharma Pvt Ltd,Umbrella Pharma|Umbrella India,29ABCDE1234F1Z5,IN,INR,Umbrella Pharma Pvt Ltd,50100012345678,Net 60,active,accounts@umbrella.example
+V005,Soylent Foods LLC,Soylent,US-99-7654321,US,USD,Soylent Foods LLC,123456789012,Net 30,blocked,ap@soylent.example
+V006,Stark Industries SE,Stark Ind|Stark,FR12345678901,FR,EUR,Stark Industries SE,FR7630006000011234567890189,Net 30,active,compta@stark.example
+V007,Wonka Logistics Ltd,Wonka,GB987654321,GB,GBP,Wonka Logistics Ltd,GB94BARC20201530093459,Net 14,active,ap@wonka.example
+V008,Hooli Cloud Services Inc,Hooli|Hooli Inc,US-77-1112223,US,USD,Hooli Cloud Services Inc,987654321098,Net 30,pending,billing@hooli.example

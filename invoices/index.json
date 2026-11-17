@@ -1,0 +1,92 @@
+[
+  {
+    "id": "INV-ACME-001",
+    "kind": "text",
+    "tag": "happy_path / tolerance",
+    "vendor": "Acme Supplies Ltd",
+    "currency": "GBP",
+    "total": "14544.00",
+    "expected_decision": "APPROVE",
+    "pdf": "INV-ACME-001.pdf"
+  },
+  {
+    "id": "INV-GLX-101",
+    "kind": "text",
+    "tag": "split_billing",
+    "vendor": "Globex Manufacturing Inc",
+    "currency": "USD",
+    "total": "12000.00",
+    "expected_decision": "APPROVE",
+    "pdf": "INV-GLX-101.pdf"
+  },
+  {
+    "id": "INV-GLX-102",
+    "kind": "text",
+    "tag": "split_billing",
+    "vendor": "Globex Manufacturing Inc",
+    "currency": "USD",
+    "total": "12000.00",
+    "expected_decision": "APPROVE",
+    "pdf": "INV-GLX-102.pdf"
+  },
+  {
+    "id": "INV-GLX-103",
+    "kind": "text",
+    "tag": "split_billing / overrun",
+    "vendor": "Globex Manufacturing Inc",
+    "currency": "USD",
+    "total": "12000.00",
+    "expected_decision": "HOLD",
+    "pdf": "INV-GLX-103.pdf"
+  },
+  {
+    "id": "INV-INI-77",
+    "kind": "scanned",
+    "tag": "scanned / implied_PO",
+    "vendor": "Initech GmbH",
+    "currency": "EUR",
+    "total": "9520.00",
+    "expected_decision": "APPROVE",
+    "pdf": "INV-INI-77.pdf"
+  },
+  {
+    "id": "INV-ACME-001-RESEND",
+    "kind": "text",
+    "tag": "duplicate",
+    "vendor": "ACME Supplies",
+    "currency": "GBP",
+    "total": "14544.00",
+    "expected_decision": "REJECT",
+    "pdf": "INV-ACME-001-RESEND.pdf"
+  },
+  {
+    "id": "INV-WNK-9",
+    "kind": "text",
+    "tag": "fraud / bank_change + injection",
+    "vendor": "Wonka Logistics Ltd",
+    "currency": "GBP",
+    "total": "6000.00",
+    "expected_decision": "HOLD",
+    "pdf": "INV-WNK-9.pdf"
+  },
+  {
+    "id": "INV-SOY-5",
+    "kind": "text",
+    "tag": "blocked_vendor",
+    "vendor": "Soylent Foods LLC",
+    "currency": "USD",
+    "total": "3000.00",
+    "expected_decision": "REJECT",
+    "pdf": "INV-SOY-5.pdf"
+  },
+  {
+    "id": "QUOTE-STARK-1",
+    "kind": "text",
+    "tag": "not_an_invoice",
+    "vendor": "Stark Industries SE",
+    "currency": "EUR",
+    "total": "18000.00",
+    "expected_decision": "REJECT",
+    "pdf": "QUOTE-STARK-1.pdf"
+  }
+]

@@ -1,0 +1,109 @@
+{
+  "id": "QUOTE-STARK-1",
+  "kind": "text",
+  "tag": "not_an_invoice",
+  "expected_decision": "REJECT",
+  "expected_codes": [
+    "NOT_AN_INVOICE"
+  ],
+  "extraction": {
+    "document_type": "quote",
+    "contains_multiple_invoices": false,
+    "vendor": {
+      "name": "Stark Industries SE",
+      "address": "10 Rue de la Paix, 75002 Paris, France",
+      "tax_id": "FR12345678901",
+      "email": "compta@stark.example",
+      "bank": {
+        "account_name": "Stark Industries SE",
+        "iban_or_account": "FR7630006000011234567890189",
+        "swift_or_routing": "AGRIFRPP"
+      }
+    },
+    "bill_to": {
+      "name": "Zamp Inc",
+      "address": "1 Market St, San Francisco, CA 94105, USA"
+    },
+    "invoice_number": "QUOTE-STARK-1",
+    "invoice_date": {
+      "raw": "03 Nov 2026",
+      "iso": "2026-11-03",
+      "ambiguous": false
+    },
+    "due_date": null,
+    "payment_terms": "Valid 30 days",
+    "po_reference": null,
+    "currency": "EUR",
+    "line_items": [
+      {
+        "description": "Arc reactor module",
+        "sku": "SKU-STK-REACTOR",
+        "quantity": "3",
+        "unit_price": {
+          "raw": "5,000.00",
+          "value": "5000.00"
+        },
+        "amount": {
+          "raw": "15,000.00",
+          "value": "15000.00"
+        },
+        "tax_rate": "0.20"
+      }
+    ],
+    "subtotal": {
+      "raw": "15,000.00",
+      "value": "15000.00"
+    },
+    "discount": null,
+    "shipping": null,
+    "tax_lines": [
+      {
+        "label": "VAT",
+        "rate": "0.20",
+        "amount": {
+          "raw": "3,000.00",
+          "value": "3000.00"
+        }
+      }
+    ],
+    "tax_inclusive": false,
+    "total": {
+      "raw": "18,000.00",
+      "value": "18000.00"
+    },
+    "amount_due": {
+      "raw": "18,000.00",
+      "value": "18000.00"
+    },
+    "evidence": {
+      "invoice_number": {
+        "quote": "Quotation No: QUOTE-STARK-1",
+        "page": 1
+      },
+      "invoice_date": {
+        "quote": "Date: 03 Nov 2026",
+        "page": 1
+      },
+      "total": {
+        "quote": "Estimated Total: EUR 18,000.00",
+        "page": 1
+      },
+      "vendor": {
+        "quote": "Stark Industries SE",
+        "page": 1
+      },
+      "tax_id": {
+        "quote": "Tax ID: FR12345678901",
+        "page": 1
+      },
+      "bank_account": {
+        "quote": "Account: FR7630006000011234567890189",
+        "page": 1
+      }
+    },
+    "missing_fields": [],
+    "legibility": "good",
+    "extraction_warnings": [],
+    "suspicious_instructions": []
+  }
+}
