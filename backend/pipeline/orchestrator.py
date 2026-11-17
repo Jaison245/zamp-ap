@@ -101,12 +101,14 @@ def run_pipeline(run_id: int) -> Iterator[dict]:
     doc_type = extraction.get("document_type", "other")
     susp = extraction.get("suspicious_instructions") or []
     ext_notes = [f"mode={meta.get('mode')}", f"type={doc_type}"]
+    if meta.get("model"):
+        ext_notes.append(f"model={meta['model']}")
     if meta.get("cost_usd"):
         ext_notes.append(f"${meta['cost_usd']} / {meta.get('tokens')} tok")
     yield emit(2, "Extraction (Claude)", "pass", t0,
                {"document_type": doc_type, "legibility": extraction.get("legibility"),
                 "line_items": len(extraction.get("line_items") or []),
-                "mode": meta.get("mode"), "cost_usd": meta.get("cost_usd"),
+                "mode": meta.get("mode"), "model": meta.get("model"), "cost_usd": meta.get("cost_usd"),
                 "suspicious_instructions": susp,
                 "fields": _field_summary(extraction)},
                notes=ext_notes)

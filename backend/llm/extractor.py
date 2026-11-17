@@ -118,42 +118,85 @@ def _parse_json(text: str) -> dict:
         raise
 
 
+def _gemini_models() -> list[str]:
+    seen, out = set(), []
+    for m in [config.GEMINI_MODEL, *config.GEMINI_FALLBACK_MODELS]:
+        if m and m not in seen:
+            seen.add(m); out.append(m)
+    return out
+
+
+def _is_overloaded(exc: Exception) -> bool:
+    from google.genai import errors
+    if isinstance(exc, errors.ServerError):
+        return True
+    if isinstance(exc, errors.ClientError) and getattr(exc, "code", None) == 429:
+        return True
+    return False
+
+
+def _with_model_fallback(call):
+    """Try each configured model in order; on each, retry transient overload
+    (503/429) a couple of times with short backoff before moving to the next
+    model. Raises the last error if every model/attempt is exhausted."""
+    import time as _time
+    last: Optional[Exception] = None
+    for model in _gemini_models():
+        for attempt in range(2):
+            try:
+                return call(model), model
+            except Exception as e:
+                last = e
+                if _is_overloaded(e) and attempt == 0:
+                    _time.sleep(1.5)
+                    continue
+                break  # non-transient, or out of retries on this model -> next model
+    raise last
+
+
 def _gemini_extract(pdf_bytes: bytes, extra_system: str = "") -> tuple[dict, dict]:
     from google.genai import types
     client = _gemini_client()
     system = prompts.SYSTEM_EXTRACT + (("\n\n" + extra_system) if extra_system else "")
     instruction = ("Extract this document. Return ONLY a JSON object matching this schema "
                    "(no markdown, no commentary):\n" + json.dumps(prompts.EXTRACTION_SCHEMA))
-    resp = client.models.generate_content(
-        model=config.GEMINI_MODEL,
-        contents=[
-            types.Part.from_bytes(data=pdf_bytes, mime_type="application/pdf"),
-            instruction,
-        ],
-        config=types.GenerateContentConfig(
-            system_instruction=system,
-            response_mime_type="application/json",
-            max_output_tokens=8000,
-            temperature=0,
-        ),
-    )
+
+    def call(model: str):
+        return client.models.generate_content(
+            model=model,
+            contents=[
+                types.Part.from_bytes(data=pdf_bytes, mime_type="application/pdf"),
+                instruction,
+            ],
+            config=types.GenerateContentConfig(
+                system_instruction=system,
+                response_mime_type="application/json",
+                max_output_tokens=8000,
+                temperature=0,
+            ),
+        )
+
+    resp, used_model = _with_model_fallback(call)
     data = _parse_json(resp.text)
     um = getattr(resp, "usage_metadata", None)
     pin = getattr(um, "prompt_token_count", 0) or 0
     pout = getattr(um, "candidates_token_count", 0) or 0
     cost = pin * _GEM_IN_RATE + pout * _GEM_OUT_RATE
-    return data, {"mode": "gemini", "cost_usd": round(cost, 4),
+    return data, {"mode": "gemini", "model": used_model, "cost_usd": round(cost, 4),
                   "tokens": pin + pout, "in": pin, "out": pout}
 
 
 def _gemini_text(prompt: str, max_tokens: int) -> str:
     from google.genai import types
     client = _gemini_client()
-    resp = client.models.generate_content(
-        model=config.GEMINI_MODEL,
-        contents=prompt,
-        config=types.GenerateContentConfig(max_output_tokens=max_tokens, temperature=0.2),
-    )
+
+    def call(model: str):
+        return client.models.generate_content(
+            model=model, contents=prompt,
+            config=types.GenerateContentConfig(max_output_tokens=max_tokens, temperature=0.2),
+        )
+
+    resp, _ = _with_model_fallback(call)
     return (resp.text or "").strip()
 
 

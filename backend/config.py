@@ -19,7 +19,14 @@ DB_PATH = ROOT / "app.db"
 RULES_PATH = DATA_DIR / "rules.yaml"
 
 MODEL = os.getenv("ANTHROPIC_MODEL", "claude-opus-5-5")
-GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-3.8-flash")
+# Default to a *-flash-lite model: as of Nov 2026 the full-size Flash models
+# (3.6/3.7/3.8) are chronically 503-overloaded on the free tier, while the lite
+# variants have capacity and answer in ~3s. Confirmed working on a fresh free key.
+GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-3.5-flash-lite")
+# Tried in order on a transient 503/429 ("model overloaded") before giving up.
+GEMINI_FALLBACK_MODELS = [m.strip() for m in
+    os.getenv("GEMINI_FALLBACK_MODELS",
+              "gemini-3.1-flash-lite,gemini-2.5-flash-lite,gemini-3.8-flash").split(",") if m.strip()]
 # EXTRACTOR: mock | claude | gemini | auto
 #   auto -> claude if ANTHROPIC_API_KEY, else gemini if GEMINI_API_KEY/GOOGLE_API_KEY, else mock
 _EXTRACTOR = os.getenv("EXTRACTOR", "auto").lower()
