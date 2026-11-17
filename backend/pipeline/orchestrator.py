@@ -199,7 +199,12 @@ def run_pipeline(run_id: int) -> Iterator[dict]:
 
     # ---------------- Stage 5: Vendor validation ----------------
     t0 = _now(); yield start(5, "Vendor validation")
-    vres = vendor_mod.validate_vendor(session, extraction)
+    try:
+        vres = vendor_mod.validate_vendor(session, extraction)
+    except Exception as e:
+        vres = {"vendor": None, "score": 0, "basis": "error",
+                "findings": [{"code": "PROCESSING_ERROR",
+                              "message": f"Vendor validation could not complete: {e}"}]}
     vend = vres["vendor"]
     findings += vres["findings"]
     currency = normalize.infer_currency(extraction, vend.currency if vend else None)
@@ -213,14 +218,21 @@ def run_pipeline(run_id: int) -> Iterator[dict]:
 
     # ---------------- Stage 6: Duplicate detection ----------------
     t0 = _now(); yield start(6, "Duplicate detection")
-    dups = duplicates.check_duplicates(session, vend, extraction, file_hash, total_gross, inv_date)
+    try:
+        dups = duplicates.check_duplicates(session, vend, extraction, file_hash, total_gross, inv_date)
+    except Exception as e:
+        dups = [{"code": "PROCESSING_ERROR", "message": f"Duplicate check could not complete: {e}"}]
     findings += dups
     yield emit(6, "Duplicate detection", "fail" if dups else "pass", t0,
                {"checked_register": True}, notes=[d["code"] for d in dups])
 
     # ---------------- Stage 7: PO matching ----------------
     t0 = _now(); yield start(7, "PO matching")
-    pom = po_match.match_po(session, vend, extraction, invoice_net, currency)
+    try:
+        pom = po_match.match_po(session, vend, extraction, invoice_net, currency)
+    except Exception as e:
+        pom = {"po": None, "inferred": False, "candidates": [],
+               "findings": [{"code": "PROCESSING_ERROR", "message": f"PO matching could not complete: {e}"}]}
     po = pom["po"]
     findings += pom["findings"]
     yield emit(7, "PO matching", "warn" if any(f["code"] in ("NO_PO_FOUND", "AMBIGUOUS_PO", "PO_CLOSED",
@@ -231,7 +243,10 @@ def run_pipeline(run_id: int) -> Iterator[dict]:
 
     # ---------------- Stage 8: Line match (2/3-way) ----------------
     t0 = _now(); yield start(8, "Line match (2/3-way)")
-    lm = lines.match_lines(session, po, vend, extraction, invoice_net, currency)
+    try:
+        lm = lines.match_lines(session, po, vend, extraction, invoice_net, currency)
+    except Exception as e:
+        lm = {"findings": [{"code": "PROCESSING_ERROR", "message": f"Line match could not complete: {e}"}], "rows": []}
     findings += lm["findings"]
     po_table = lm["rows"]
     yield emit(8, "Line match (2/3-way)", "fail" if any(f["code"] in ("PO_OVERBILLED", "PRICE_VARIANCE",

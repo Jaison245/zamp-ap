@@ -200,14 +200,70 @@ def _gemini_text(prompt: str, max_tokens: int) -> str:
     return (resp.text or "").strip()
 
 
+# ----------------------------------------------- shape coercion (robustness) ----
+# Real LLM output drifts from our canonical schema (e.g. "vendor" as a bare
+# string, missing nested objects). The deterministic pipeline assumes the rigid
+# shape, so we normalise every LLM extraction into it before the pipeline runs.
+# Values that are already the right shape are left untouched (idempotent).
+def _as_obj(v, name_key: str = "name") -> dict:
+    if isinstance(v, dict):
+        return v
+    if isinstance(v, str) and v.strip():
+        return {name_key: v.strip()}
+    return {}
+
+
+def _as_dicts(v) -> list:
+    return [x for x in v if isinstance(x, dict)] if isinstance(v, list) else []
+
+
+def _as_strlist(v) -> list:
+    if isinstance(v, list):
+        return [x for x in v if x not in (None, "")]
+    return [] if v in (None, "") else [v]
+
+
+def coerce_extraction(data: dict) -> dict:
+    """Normalise an LLM extraction into the canonical schema the pipeline expects."""
+    if not isinstance(data, dict):
+        return {"document_type": "other", "line_items": [], "tax_lines": [],
+                "vendor": {"bank": {}}, "bill_to": {}, "evidence": {},
+                "suspicious_instructions": [], "missing_fields": [], "extraction_warnings": [],
+                "legibility": "poor", "contains_multiple_invoices": False}
+    d = dict(data)
+
+    vendor = _as_obj(d.get("vendor"))
+    bank = vendor.get("bank") if isinstance(vendor.get("bank"), dict) else {}
+    if not bank.get("iban_or_account"):
+        for k in ("iban", "account", "account_number", "number", "bank_account", "iban_or_account_number"):
+            src = bank.get(k) or vendor.get(k)
+            if src:
+                bank["iban_or_account"] = src
+                break
+    vendor["bank"] = bank
+    d["vendor"] = vendor
+
+    d["bill_to"] = _as_obj(d.get("bill_to"))
+    d["line_items"] = _as_dicts(d.get("line_items"))
+    d["tax_lines"] = _as_dicts(d.get("tax_lines"))
+    d["evidence"] = d.get("evidence") if isinstance(d.get("evidence"), dict) else {}
+    for k in ("suspicious_instructions", "missing_fields", "extraction_warnings"):
+        d[k] = _as_strlist(d.get(k))
+    d["document_type"] = d.get("document_type") or "invoice"
+    d["contains_multiple_invoices"] = bool(d.get("contains_multiple_invoices"))
+    return d
+
+
 # ------------------------------------------------------------ public ------
 def run_extraction(pdf_bytes: bytes) -> tuple[dict, dict]:
     mode = config.extractor_mode()
     if mode == "claude":
-        return _claude_extract(pdf_bytes)
-    if mode == "gemini":
-        return _gemini_extract(pdf_bytes)
-    return _mock_extract(pdf_bytes)
+        data, meta = _claude_extract(pdf_bytes)
+    elif mode == "gemini":
+        data, meta = _gemini_extract(pdf_bytes)
+    else:
+        return _mock_extract(pdf_bytes)  # mock is already canonical
+    return coerce_extraction(data), meta
 
 
 def double_read(pdf_bytes: bytes) -> tuple[dict, dict, list[str]]:
