@@ -19,14 +19,34 @@ DB_PATH = ROOT / "app.db"
 RULES_PATH = DATA_DIR / "rules.yaml"
 
 MODEL = os.getenv("ANTHROPIC_MODEL", "claude-opus-5-5")
-# EXTRACTOR: mock | claude | auto  (auto -> claude if ANTHROPIC_API_KEY present, else mock)
+GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-3.8-flash")
+# EXTRACTOR: mock | claude | gemini | auto
+#   auto -> claude if ANTHROPIC_API_KEY, else gemini if GEMINI_API_KEY/GOOGLE_API_KEY, else mock
 _EXTRACTOR = os.getenv("EXTRACTOR", "auto").lower()
+
+
+def _has_gemini_key() -> bool:
+    return bool(os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY"))
 
 
 def extractor_mode() -> str:
     if _EXTRACTOR == "auto":
-        return "claude" if os.getenv("ANTHROPIC_API_KEY") else "mock"
+        if os.getenv("ANTHROPIC_API_KEY"):
+            return "claude"
+        if _has_gemini_key():
+            return "gemini"
+        return "mock"
     return _EXTRACTOR
+
+
+def active_model() -> str:
+    """The model actually in use, for display in /api/health."""
+    mode = extractor_mode()
+    if mode == "gemini":
+        return GEMINI_MODEL
+    if mode == "claude":
+        return MODEL
+    return "mock"
 
 
 _rules_cache: dict | None = None

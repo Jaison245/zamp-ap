@@ -12,9 +12,10 @@ uploads/
 app.db
 *.db
 
-# Secrets
+# Secrets (but keep the safe, no-value template)
 .env
 .env.*
+!.env.example
 
 # Editor / OS
 .claude/

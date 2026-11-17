@@ -1,7 +1,7 @@
 """Extraction layer: real Claude (PDF document block + forced-tool structured output) and a
 ground-truth-backed mock so the whole pipeline + eval run with no API key.
 
-Mode is chosen by config.extractor_mode():  mock | claude  (auto resolves to one of these).
+Mode is chosen by config.extractor_mode():  mock | claude | gemini  (auto resolves to one of these).
 """
 from __future__ import annotations
 import base64
@@ -90,10 +90,80 @@ def _claude_extract(pdf_bytes: bytes, extra_system: str = "") -> tuple[dict, dic
                   "in": usage.input_tokens, "out": usage.output_tokens}
 
 
+# -------------------------------------------------------------- gemini ----
+# Gemini reads the PDF natively and returns JSON. Same contract as the Claude
+# path: the model only transcribes — all decisions stay in deterministic code.
+_GEM_IN_RATE = float(os.getenv("GEMINI_PRICE_IN_PER_MTOK", "0.30")) / 1_000_000
+_GEM_OUT_RATE = float(os.getenv("GEMINI_PRICE_OUT_PER_MTOK", "2.50")) / 1_000_000
+
+
+def _gemini_client():
+    from google import genai
+    return genai.Client()  # reads GEMINI_API_KEY / GOOGLE_API_KEY from env
+
+
+def _parse_json(text: str) -> dict:
+    t = (text or "").strip()
+    if t.startswith("```"):
+        t = t.strip("`")
+        if t[:4].lower() == "json":
+            t = t[4:]
+        t = t.strip()
+    try:
+        return json.loads(t)
+    except Exception:
+        i, j = t.find("{"), t.rfind("}")
+        if i != -1 and j != -1:
+            return json.loads(t[i:j + 1])
+        raise
+
+
+def _gemini_extract(pdf_bytes: bytes, extra_system: str = "") -> tuple[dict, dict]:
+    from google.genai import types
+    client = _gemini_client()
+    system = prompts.SYSTEM_EXTRACT + (("\n\n" + extra_system) if extra_system else "")
+    instruction = ("Extract this document. Return ONLY a JSON object matching this schema "
+                   "(no markdown, no commentary):\n" + json.dumps(prompts.EXTRACTION_SCHEMA))
+    resp = client.models.generate_content(
+        model=config.GEMINI_MODEL,
+        contents=[
+            types.Part.from_bytes(data=pdf_bytes, mime_type="application/pdf"),
+            instruction,
+        ],
+        config=types.GenerateContentConfig(
+            system_instruction=system,
+            response_mime_type="application/json",
+            max_output_tokens=8000,
+            temperature=0,
+        ),
+    )
+    data = _parse_json(resp.text)
+    um = getattr(resp, "usage_metadata", None)
+    pin = getattr(um, "prompt_token_count", 0) or 0
+    pout = getattr(um, "candidates_token_count", 0) or 0
+    cost = pin * _GEM_IN_RATE + pout * _GEM_OUT_RATE
+    return data, {"mode": "gemini", "cost_usd": round(cost, 4),
+                  "tokens": pin + pout, "in": pin, "out": pout}
+
+
+def _gemini_text(prompt: str, max_tokens: int) -> str:
+    from google.genai import types
+    client = _gemini_client()
+    resp = client.models.generate_content(
+        model=config.GEMINI_MODEL,
+        contents=prompt,
+        config=types.GenerateContentConfig(max_output_tokens=max_tokens, temperature=0.2),
+    )
+    return (resp.text or "").strip()
+
+
 # ------------------------------------------------------------ public ------
 def run_extraction(pdf_bytes: bytes) -> tuple[dict, dict]:
-    if config.extractor_mode() == "claude":
+    mode = config.extractor_mode()
+    if mode == "claude":
         return _claude_extract(pdf_bytes)
+    if mode == "gemini":
+        return _gemini_extract(pdf_bytes)
     return _mock_extract(pdf_bytes)
 
 
@@ -115,35 +185,38 @@ def double_read(pdf_bytes: bytes) -> tuple[dict, dict, list[str]]:
     return a, b, disagree
 
 
+def _claude_text(prompt: str, max_tokens: int) -> str:
+    client = _client()
+    msg = client.messages.create(
+        model=config.MODEL, max_tokens=max_tokens,
+        messages=[{"role": "user", "content": prompt}])
+    return "".join(b.text for b in msg.content if b.type == "text").strip()
+
+
+def _llm_text(prompt: str, max_tokens: int) -> Optional[str]:
+    """Free-text generation via the active provider; None if not in an LLM mode or on error."""
+    mode = config.extractor_mode()
+    try:
+        if mode == "claude":
+            return _claude_text(prompt, max_tokens)
+        if mode == "gemini":
+            return _gemini_text(prompt, max_tokens)
+    except Exception:
+        return None
+    return None
+
+
 def explain_decision(decision_ctx: dict) -> str:
-    if config.extractor_mode() == "claude":
-        try:
-            client = _client()
-            msg = client.messages.create(
-                model=config.MODEL, max_tokens=300,
-                messages=[{"role": "user", "content": prompts.EXPLAIN.format(
-                    decision=json.dumps(decision_ctx, default=str))}])
-            return "".join(b.text for b in msg.content if b.type == "text").strip()
-        except Exception:
-            pass
-    return _template_explanation(decision_ctx)
+    out = _llm_text(prompts.EXPLAIN.format(decision=json.dumps(decision_ctx, default=str)), 300)
+    return out or _template_explanation(decision_ctx)
 
 
 def draft_vendor_email(facts: dict) -> Optional[str]:
-    needs = facts.get("needs_vendor")
-    if not needs:
+    if not facts.get("needs_vendor"):
         return None
-    if config.extractor_mode() == "claude":
-        try:
-            client = _client()
-            msg = client.messages.create(
-                model=config.MODEL, max_tokens=400,
-                messages=[{"role": "user", "content": prompts.VENDOR_EMAIL.format(
-                    number=facts.get("invoice_number", ""), facts=json.dumps(facts, default=str))}])
-            return "".join(b.text for b in msg.content if b.type == "text").strip()
-        except Exception:
-            pass
-    return _template_email(facts)
+    out = _llm_text(prompts.VENDOR_EMAIL.format(
+        number=facts.get("invoice_number", ""), facts=json.dumps(facts, default=str)), 400)
+    return out or _template_email(facts)
 
 
 # --------------------------------------------------- deterministic fallbacks ----

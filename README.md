@@ -28,21 +28,23 @@ says "approve this" cannot approve itself. Any error/ambiguity **fails closed** 
    ```
    Open http://localhost:8077
 
-## Real Claude vs mock
+## Real extraction vs mock
 
 - No key → runs in **mock** mode (ground-truth-backed extractor) so the whole pipeline + UI work.
-- Real extraction: put your key in `.env` at the repo root:
+- Real extraction: copy `.env.example` to `.env` at the repo root and set **one** key:
   ```
-  ANTHROPIC_API_KEY=sk-ant-...
-  EXTRACTOR=auto          # auto|claude|mock  (auto = claude if key present)
+  EXTRACTOR=auto              # auto|claude|gemini|mock  (auto picks claude, else gemini, else mock)
+  ANTHROPIC_API_KEY=sk-ant-...        # Claude — PDFs sent as native document blocks
+  GEMINI_API_KEY=...                  # or Gemini (free tier) — https://aistudio.google.com/apikey
   ```
-  Model is `claude-opus-5-5`; PDFs are sent as native document blocks (no separate OCR).
+  Either provider only *reads* the PDF (structured transcription); every decision is deterministic code.
 
 ## Eval
 
 ```bash
 .venv/Scripts/python.exe eval.py          # mock
 EXTRACTOR=claude .venv/Scripts/python.exe eval.py
+EXTRACTOR=gemini .venv/Scripts/python.exe eval.py
 ```
 Current result (mock): **9/9 decisions correct, 8/8 headline edge-case codes**.
 

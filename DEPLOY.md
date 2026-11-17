@@ -21,21 +21,23 @@ together with the FastAPI API on a single port. Render reads `render.yaml`
 That URL is your judge-clickable live link. It serves the UI at `/` and the API
 under `/api`.
 
-## 2. (Optional) Turn on real Claude extraction
+## 2. (Optional) Turn on real extraction — Claude or Gemini
 
 By default the app runs in **mock mode** — deterministic, free, and perfect for a
 reliable demo (the pipeline, decisions, and UI are all 100% real; only the
 PDF-reading step is replaced by a ground-truth stand-in).
 
-To use the real model instead:
+To use a real model instead, add **one** key in Render dashboard → the `zamp-ap`
+service → **Environment** (the service redeploys automatically):
 
-1. Render dashboard → the `zamp-ap` service → **Environment**.
-2. Add a variable: `ANTHROPIC_API_KEY` = your key → **Save**.
-   (The service redeploys automatically.)
-3. The health badge in the app's sidebar will flip from `mock` to `claude`.
+- **Gemini (free tier available):** add `GEMINI_API_KEY` = a key from
+  https://aistudio.google.com/apikey. The sidebar health badge flips to `gemini`.
+- **Claude:** add `ANTHROPIC_API_KEY` instead. The badge flips to `claude`.
 
-`EXTRACTOR` is already set to `auto`, so the app uses Claude whenever a key is
-present and falls back to mock when it isn't.
+`EXTRACTOR` is already set to `auto`, so the app picks whichever key is present
+(Claude wins if both are set) and falls back to mock if neither is.
+
+Locally, the same two keys work via a `.env` file — see `.env.example`.
 
 ## 3. Good to know
 

@@ -28,7 +28,7 @@ def _startup():
 
 @app.get("/api/health")
 def health():
-    return {"status": "ok", "extractor": config.extractor_mode(), "model": config.MODEL}
+    return {"status": "ok", "extractor": config.extractor_mode(), "model": config.active_model()}
 
 
 # ----------------------------------------------------------------- samples ----

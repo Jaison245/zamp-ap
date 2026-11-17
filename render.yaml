@@ -12,7 +12,10 @@ services:
       # Mock mode by default (no key needed) = free, deterministic demo.
       - key: EXTRACTOR
         value: auto
-      # Optional: add your key in the Render dashboard to switch to real Claude
-      # extraction. Left unset here so it never lands in git.
+      # Optional: add ONE of these in the Render dashboard to switch on real
+      # extraction (Claude takes priority if both are set). Left unset here
+      # so no key ever lands in git.
       - key: ANTHROPIC_API_KEY
+        sync: false
+      - key: GEMINI_API_KEY
         sync: false
