@@ -13,7 +13,7 @@ from .normalize import norm_invoice_number
 
 
 def _norm_po(s) -> str:
-    return "".join(ch for ch in (s or "").upper() if ch.isalnum())
+    return "".join(ch for ch in str(s if s is not None else "").upper() if ch.isalnum())
 
 
 def check_duplicates(session: Session, vendor: Optional[Vendor], extraction: dict,

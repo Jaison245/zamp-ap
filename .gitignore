@@ -11,6 +11,7 @@ frontend/dist/
 uploads/
 app.db
 *.db
+pipeline_errors.log
 
 # Secrets (but keep the safe, no-value template)
 .env

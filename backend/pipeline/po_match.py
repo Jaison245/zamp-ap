@@ -22,7 +22,7 @@ def billed_net(session: Session, po_number: str) -> Decimal:
 
 
 def _line_similarity(extraction: dict, po_number: str, session: Session) -> float:
-    inv_desc = " ".join((li.get("description") or "") for li in (extraction.get("line_items") or []))
+    inv_desc = " ".join(str(li.get("description") or "") for li in (extraction.get("line_items") or []))
     po_desc = " ".join(pl.description for pl in
                        session.exec(select(POLine).where(POLine.po_number == po_number)).all())
     if not inv_desc or not po_desc:
@@ -34,7 +34,7 @@ def match_po(session: Session, vendor: Optional[Vendor], extraction: dict,
              invoice_net: Optional[Decimal], currency: Optional[str]) -> dict:
     findings: list[dict] = []
     tol = Decimal(str(load_rules()["tolerances"]["cumulative_po_pct"]))
-    ref = (extraction.get("po_reference") or "").strip()
+    ref = str(extraction.get("po_reference") or "").strip()
 
     # 1. explicit reference
     if ref:

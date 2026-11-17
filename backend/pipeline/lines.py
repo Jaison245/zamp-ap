@@ -61,8 +61,8 @@ def match_lines(session: Session, po: Optional[PurchaseOrder], vendor: Optional[
     three_way = bool(receipts)
     within_tol_variance = False
     for li in extraction.get("line_items") or []:
-        inv_desc = li.get("description") or ""
-        inv_sku = li.get("sku") or ""
+        inv_desc = str(li.get("description") or "")
+        inv_sku = str(li.get("sku") or "")
         qty = D(li.get("quantity"))
         unit = D(li.get("unit_price"))
         pl = _match_line(inv_desc, inv_sku, po_lines)

@@ -243,7 +243,28 @@ def coerce_extraction(data: dict) -> dict:
     vendor["bank"] = bank
     d["vendor"] = vendor
 
+    # Force fields the pipeline treats as plain strings to actually be strings
+    # (LLMs sometimes return a number or a nested object where a string is expected).
+    def _s(v):
+        if v is None or isinstance(v, str):
+            return v
+        if isinstance(v, dict):
+            return v.get("value") or v.get("raw") or v.get("text") or v.get("name") or ""
+        return str(v)
+    for k in ("invoice_number", "po_reference", "currency", "payment_terms",
+              "document_type", "legibility"):
+        if k in d:
+            d[k] = _s(d[k])
+    for k in ("name", "tax_id", "email", "address"):
+        if k in vendor:
+            vendor[k] = _s(vendor[k])
+    for k in ("account_name", "iban_or_account", "swift_or_routing"):
+        if k in bank:
+            bank[k] = _s(bank[k])
+
     d["bill_to"] = _as_obj(d.get("bill_to"))
+    if isinstance(d["bill_to"].get("name"), (dict, int, float)):
+        d["bill_to"]["name"] = _s(d["bill_to"]["name"])
     d["line_items"] = _as_dicts(d.get("line_items"))
     d["tax_lines"] = _as_dicts(d.get("tax_lines"))
     d["evidence"] = d.get("evidence") if isinstance(d.get("evidence"), dict) else {}

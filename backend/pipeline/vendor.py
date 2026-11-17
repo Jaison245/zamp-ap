@@ -9,15 +9,15 @@ from ..config import load_rules
 from ..models import Vendor
 
 
-def _norm(s: Optional[str]) -> str:
-    return "".join(ch for ch in (s or "").lower() if ch.isalnum())
+def _norm(s) -> str:
+    return "".join(ch for ch in str(s if s is not None else "").lower() if ch.isalnum())
 
 
 def match_vendor(session: Session, extraction: dict) -> tuple[Optional[Vendor], int, str]:
     """Return (vendor, score, basis). Exact tax-id first, then fuzzy name/alias."""
     v = extraction.get("vendor") or {}
     tax_id = _norm(v.get("tax_id"))
-    name = (v.get("name") or "").strip()
+    name = str(v.get("name") or "").strip()
     vendors = session.exec(select(Vendor)).all()
 
     if tax_id:
@@ -49,7 +49,7 @@ def validate_vendor(session: Session, extraction: dict) -> dict:
         return {"vendor": None, "score": score, "basis": basis, "findings": findings}
 
     # addressee check
-    bill_to = ((extraction.get("bill_to") or {}).get("name") or "")
+    bill_to = str((extraction.get("bill_to") or {}).get("name") or "")
     our_names = [n.lower() for n in load_rules().get("our_company", {}).get("names", [])]
     if bill_to and our_names and not any(n in bill_to.lower() for n in our_names):
         findings.append({"code": "WRONG_ADDRESSEE",

@@ -2,8 +2,10 @@
 commits side effects (invoice register + PO balance) inside the run's transaction."""
 from __future__ import annotations
 import io
+import json
 import time
-from datetime import date
+import traceback
+from datetime import date, datetime
 from decimal import Decimal
 from typing import Iterator, Optional
 
@@ -23,6 +25,23 @@ KEY_EVIDENCE_FIELDS = ["invoice_number", "invoice_date", "total", "po_reference"
 
 def _now() -> float:
     return time.time()
+
+
+_ERR_LOG = config.ROOT / "pipeline_errors.log"
+
+
+def _log_err(stage: str, exc: Exception, extraction: dict | None = None) -> str:
+    """Append a full traceback + the extraction to a file, for post-mortem. Returns short msg."""
+    try:
+        with open(_ERR_LOG, "a", encoding="utf-8") as f:
+            f.write(f"\n{'='*70}\n{datetime.now().isoformat()}  STAGE: {stage}\n")
+            f.write(f"{type(exc).__name__}: {exc}\n")
+            f.write(traceback.format_exc())
+            if extraction is not None:
+                f.write("EXTRACTION:\n" + json.dumps(extraction, default=str, indent=2) + "\n")
+    except Exception:
+        pass
+    return f"{type(exc).__name__}: {exc}"
 
 
 def _grounded(quote: Optional[str], text: str) -> bool:
@@ -215,7 +234,7 @@ def run_pipeline(run_id: int) -> Iterator[dict]:
     except Exception as e:
         vres = {"vendor": None, "score": 0, "basis": "error",
                 "findings": [{"code": "PROCESSING_ERROR",
-                              "message": f"Vendor validation could not complete: {e}"}]}
+                              "message": f"Vendor validation error — {_log_err('vendor', e, extraction)}"}]}
     vend = vres["vendor"]
     findings += vres["findings"]
     currency = normalize.infer_currency(extraction, vend.currency if vend else None)
@@ -232,7 +251,7 @@ def run_pipeline(run_id: int) -> Iterator[dict]:
     try:
         dups = duplicates.check_duplicates(session, vend, extraction, file_hash, total_gross, inv_date)
     except Exception as e:
-        dups = [{"code": "PROCESSING_ERROR", "message": f"Duplicate check could not complete: {e}"}]
+        dups = [{"code": "PROCESSING_ERROR", "message": f"Duplicate check error — {_log_err('duplicates', e, extraction)}"}]
     findings += dups
     yield emit(6, "Duplicate detection", "fail" if dups else "pass", t0,
                {"checked_register": True}, notes=[d["code"] for d in dups])
@@ -243,7 +262,7 @@ def run_pipeline(run_id: int) -> Iterator[dict]:
         pom = po_match.match_po(session, vend, extraction, invoice_net, currency)
     except Exception as e:
         pom = {"po": None, "inferred": False, "candidates": [],
-               "findings": [{"code": "PROCESSING_ERROR", "message": f"PO matching could not complete: {e}"}]}
+               "findings": [{"code": "PROCESSING_ERROR", "message": f"PO matching error — {_log_err('po_match', e, extraction)}"}]}
     po = pom["po"]
     findings += pom["findings"]
     yield emit(7, "PO matching", "warn" if any(f["code"] in ("NO_PO_FOUND", "AMBIGUOUS_PO", "PO_CLOSED",
@@ -257,7 +276,7 @@ def run_pipeline(run_id: int) -> Iterator[dict]:
     try:
         lm = lines.match_lines(session, po, vend, extraction, invoice_net, currency)
     except Exception as e:
-        lm = {"findings": [{"code": "PROCESSING_ERROR", "message": f"Line match could not complete: {e}"}], "rows": []}
+        lm = {"findings": [{"code": "PROCESSING_ERROR", "message": f"Line match error — {_log_err('lines', e, extraction)}"}], "rows": []}
     findings += lm["findings"]
     po_table = lm["rows"]
     yield emit(8, "Line match (2/3-way)", "fail" if any(f["code"] in ("PO_OVERBILLED", "PRICE_VARIANCE",
