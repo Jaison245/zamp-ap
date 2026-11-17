@@ -197,6 +197,17 @@ def run_pipeline(run_id: int) -> Iterator[dict]:
                {"invoice_number_norm": inv_no_norm, "invoice_net": str(invoice_net),
                 "total_gross": str(total_gross), **age_detail})
 
+    # The long LLM extraction above may have resumed this streaming generator on
+    # a different worker thread; a SQLAlchemy/SQLite session is not safe across
+    # that. Persist what stage 2 set, then use a fresh session for the DB stages.
+    session.add(run); session.commit()
+    try:
+        session.close()
+    except Exception:
+        pass
+    session = Session(engine)
+    run = session.get(Run, run_id)
+
     # ---------------- Stage 5: Vendor validation ----------------
     t0 = _now(); yield start(5, "Vendor validation")
     try:
@@ -271,6 +282,12 @@ def _field_summary(extraction: dict) -> dict:
 def _finish(session: Session, run: Run, findings: list, events: list, extraction: dict,
             vend, po, invoice_net, t_run, currency=None, total_gross=None,
             inv_no_norm="", inv_date: Optional[date] = None, po_table=None) -> Iterator[dict]:
+    # Persist anything pending on the incoming session (e.g. stage-2 extraction +
+    # cost) before we later swap to a fresh write session.
+    try:
+        session.add(run); session.commit()
+    except Exception:
+        pass
     # Stage 9: decision engine
     t0 = _now()
     yield {"type": "stage", "stage": 9, "name": "Decision engine", "status": "running",
@@ -304,11 +321,25 @@ def _finish(session: Session, run: Run, findings: list, events: list, extraction
         "codes": [c["code"] for c in dec["codes"]],
         "reasons": [c["message"] for c in dec["codes"] if c["outcome"] != "INFO"]})
 
+    # Capture what we need as plain values, then use a FRESH session for all
+    # writes — never held across the LLM calls above (which may have resumed this
+    # streaming generator on a different thread, corrupting the old session).
+    run_id = run.id
+    vend_id = vend.vendor_id if vend else None
+    vend_name = vend.legal_name if vend else v.get("name")
+    po_number = po.po_number if po else None
+    try:
+        session.close()
+    except Exception:
+        pass
+    session = Session(engine)
+    run = session.get(Run, run_id)
+
     posting = None
     side_effects = []
-    if decision == "APPROVE" and vend is not None:
-        posting = _commit_approval(session, run, extraction, vend, po, invoice_net, total_gross,
-                                   inv_no_norm, inv_date, currency)
+    if decision == "APPROVE" and vend_id is not None:
+        posting = _commit_approval(session, run, extraction, vend_id, vend_name, po_number,
+                                   invoice_net, total_gross, inv_no_norm, inv_date, currency)
         side_effects = posting.get("side_effects", [])
 
     result = {
@@ -316,7 +347,7 @@ def _finish(session: Session, run: Run, findings: list, events: list, extraction
         "top_reason": dec["top_reason"], "explanation": explanation, "vendor_email": vendor_email,
         "posting": posting, "side_effects": side_effects,
         "extraction": extraction, "po_table": po_table or [],
-        "vendor": {"name": vend.legal_name, "id": vend.vendor_id} if vend else None,
+        "vendor": {"name": vend_name, "id": vend_id} if vend_id else None,
         "amount": amount, "currency": currency,
         "invoice_number": extraction.get("invoice_number"),
     }
@@ -335,26 +366,30 @@ def _finish(session: Session, run: Run, findings: list, events: list, extraction
     run.vendor_email = vendor_email
     run.events = events
     run.result = result
-    run.vendor_name = vend.legal_name if vend else (v.get("name"))
+    run.vendor_name = vend_name
     run.invoice_number = extraction.get("invoice_number")
     run.amount = float(total_gross) if total_gross is not None else None
     run.currency = currency
     run.duration_ms = int((_now() - t_run) * 1000)
     session.add(run); session.commit()
+    cost_usd = run.cost_usd
 
-    yield {"type": "decision", "run_id": run.id, "result": result,
-           "duration_ms": run.duration_ms, "cost_usd": run.cost_usd}
+    yield {"type": "decision", "run_id": run_id, "result": result,
+           "duration_ms": run.duration_ms, "cost_usd": cost_usd}
     session.close()
 
 
-def _commit_approval(session: Session, run: Run, extraction: dict, vend, po,
-                     invoice_net, total_gross, inv_no_norm, inv_date, currency) -> dict:
-    """Write the invoice register and update the PO balance, in the run's transaction."""
-    prior_billed = po_match.billed_net(session, po.po_number) if po else Decimal("0")
+def _commit_approval(session: Session, run: Run, extraction: dict, vend_id: str, vend_name: str,
+                     po_number: Optional[str], invoice_net, total_gross, inv_no_norm, inv_date,
+                     currency) -> dict:
+    """Write the invoice register and update the PO balance, in a fresh session."""
+    po = (session.exec(select(PurchaseOrder).where(PurchaseOrder.po_number == po_number)).first()
+          if po_number else None)
+    prior_billed = po_match.billed_net(session, po_number) if po_number else Decimal("0")
     reg = InvoiceRegister(
-        run_id=run.id, vendor_id=vend.vendor_id, invoice_number_norm=inv_no_norm,
+        run_id=run.id, vendor_id=vend_id, invoice_number_norm=inv_no_norm,
         invoice_number_raw=extraction.get("invoice_number") or "",
-        po_number=po.po_number if po else None,
+        po_number=po_number,
         invoice_date=inv_date.isoformat() if inv_date else "",
         currency=currency or "", subtotal_net=float(invoice_net or 0),
         total_gross=float(total_gross or 0), file_hash=run.file_hash, decision="APPROVE")
@@ -369,9 +404,9 @@ def _commit_approval(session: Session, run: Run, extraction: dict, vend, po,
         side_effects.append(f"PO {po.po_number} billed {billed} / {po.total} -> {new_status}")
     session.commit()
     posting = {
-        "vendor": vend.legal_name, "vendor_id": vend.vendor_id,
+        "vendor": vend_name, "vendor_id": vend_id,
         "invoice_number": extraction.get("invoice_number"),
-        "po_number": po.po_number if po else None, "currency": currency,
+        "po_number": po_number, "currency": currency,
         "net": str(invoice_net), "gross": str(total_gross),
         "gl_account": "2000 Accounts Payable",
         "lines": [{"description": li.get("description"), "amount": (li.get("amount") or {}).get("value")}
